@@ -6,7 +6,10 @@ import (
 	"os"
 
 	"github.com/gin-gonic/gin"
+<<<<<<< HEAD
 	"github.com/joho/godotenv"
+=======
+>>>>>>> 894af313cb71edf4680f49e3bf702b0e96b13672
 	"github.com/panjiallatief/GOAMS/config"
 	"github.com/panjiallatief/GOAMS/handlers"
 	"github.com/panjiallatief/GOAMS/models"
@@ -15,12 +18,15 @@ import (
 )
 
 func main() {
+<<<<<<< HEAD
 	// Load environment variables
 	err := godotenv.Load()
 	if err != nil {
 		log.Fatalf("Error loading .env file: %v", err)
 	}
 
+=======
+>>>>>>> 894af313cb71edf4680f49e3bf702b0e96b13672
 	// Initialize database connection
 	db, err := config.InitDB()
 	if err != nil {
@@ -32,11 +38,17 @@ func main() {
 
 	router := gin.Default()
 
+<<<<<<< HEAD
 	// Serve dashboard static files
 	router.Static("/src", "./src")
 	router.GET("/", func(c *gin.Context) {
 		c.File("./src/index.html")
 	})
+=======
+	// Serve frontend static files
+	router.Static("/static", "./static")
+	router.StaticFile("/", "./static/index.html")
+>>>>>>> 894af313cb71edf4680f49e3bf702b0e96b13672
 
 	// Health check endpoint
 	router.GET("/ping", func(c *gin.Context) {

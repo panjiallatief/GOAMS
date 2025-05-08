@@ -5,13 +5,21 @@ import "time"
 // Asset represents the asset entity
 type Asset struct {
 	IDAsset           uint      `gorm:"column:id_asset;primaryKey;autoIncrement" json:"id_asset"`
+<<<<<<< HEAD
 	NoBarcode         string    `gorm:"column:no_barcode" json:"no_barcode"`
+=======
+	NoBarcode         string    `gorm:"column:No_Barcode" json:"no_barcode"`
+>>>>>>> 894af313cb71edf4680f49e3bf702b0e96b13672
 	Owner             string    `gorm:"column:owner" json:"owner"`
 	Category          string    `gorm:"column:category" json:"category"`
 	ItemName          string    `gorm:"column:item_name" json:"item_name"`
 	NamaBrand         string    `gorm:"column:Nama_Brand" json:"nama_brand"`
 	NamaItemModel     string    `gorm:"column:Nama_Item_Model" json:"nama_item_model"`
+<<<<<<< HEAD
 	ItemSN            string    `gorm:"column:item_serial_number" json:"item_sn"`
+=======
+	ItemSN            string    `gorm:"column:Item_Serial_Number" json:"item_sn"`
+>>>>>>> 894af313cb71edf4680f49e3bf702b0e96b13672
 	Vendor            string    `gorm:"column:vendor" json:"vendor"`
 	Tag               string    `gorm:"column:tag;type:text" json:"tag"`
 	UnitPrice         int       `gorm:"column:Unit_Price" json:"unit_price"`
