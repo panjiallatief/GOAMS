@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"errors"
 	"net/http"
 	"strconv"
 
@@ -35,7 +36,11 @@ func (h *AssetHandler) CreateAsset(c *gin.Context) {
 		return
 	}
 	if err := h.service.CreateAsset(&asset); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		if errors.Is(err, service.ErrSNAlreadyExists) {
+			c.JSON(http.StatusConflict, gin.H{"error": err.Error()})
+		} else {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		}
 		return
 	}
 	c.JSON(http.StatusCreated, asset)
@@ -80,7 +85,11 @@ func (h *AssetHandler) UpdateAsset(c *gin.Context) {
 	}
 	asset.IDAsset = uint(id)
 	if err := h.service.UpdateAsset(&asset); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		if errors.Is(err, service.ErrSNAlreadyExists) {
+			c.JSON(http.StatusConflict, gin.H{"error": err.Error()})
+		} else {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		}
 		return
 	}
 	c.JSON(http.StatusOK, asset)

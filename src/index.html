@@ -5,11 +5,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="./src/output.css" rel="stylesheet">
+    <style>[x-cloak] { display: none !important; }</style>
 </head>
 
-<body>
+<body x-data="setup()" x-init="fetchAssets()">
     <div>
-        <div class="flex h-screen overflow-y-hidden bg-white" x-data="setup()" x-init="fetchAssets()">
+        <div class="flex h-screen overflow-y-hidden bg-white">
             <!-- Loading screen -->
             <div x-show="loading"
                 class="fixed inset-0 z-50 flex items-center justify-center text-white bg-black bg-opacity-50"
@@ -339,7 +340,7 @@
                     <div
                         class="flex flex-col items-start justify-between pb-6 space-y-4 border-b lg:items-center lg:space-y-0 lg:flex-row">
                         <h1 class="text-2xl font-semibold whitespace-nowrap">Dashboard</h1>
-                        
+                        <button @click="isModalOpen = true" class="px-4 py-2 ml-4 bg-blue-600 text-white rounded">Add Asset</button>
                     </div>
 
                     <!-- Start Content -->
@@ -362,7 +363,7 @@
                     </div>
 
                     <!-- Table see (https://tailwindui.com/components/application-ui/lists/tables) -->
-                    <h3 class="mt-6 text-xl">Users</h3>
+                    <h3 class="mt-6 text-xl">Assets</h3>
                     <div class="flex flex-col mt-6">
                         <div class="-my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
                             <div class="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
@@ -415,57 +416,174 @@
 
         </div>
     </div>
+
+    <!-- Asset Input Modal -->
+    <div x-show="isModalOpen" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-[90%]">
+        <div @click.away="isModalOpen = false" class="bg-white rounded-lg shadow-lg w-full max-w-2xl p-6">
+            <h2 class="text-xl font-semibold mb-4">Add New Asset</h2>
+            <form @submit.prevent="submitAsset()" class="space-y-4">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block font-medium">Purchase Request</label>
+                        <input type="text" x-model="assetForm.pr" class="w-full border rounded px-2 py-1"/>
+                    </div>
+                    <div>
+                        <label class="block font-medium">Purchase Order</label>
+                        <input type="text" x-model="assetForm.po" class="w-full border rounded px-2 py-1"/>
+                    </div>
+                    <div>
+                        <label class="block font-medium">No. Navision</label>
+                        <input type="text" x-model="assetForm.nav" class="w-full border rounded px-2 py-1"/>
+                    </div>
+                    <div>
+                        <label class="block font-medium">PIC</label>
+                        <input type="text" x-model="assetForm.pic" class="w-full border rounded px-2 py-1"/>
+                    </div>
+                    <div>
+                        <label class="block font-medium">Divisi</label>
+                        <input type="text" x-model="assetForm.divisi" class="w-full border rounded px-2 py-1"/>
+                    </div>
+                    <div>
+                        <label class="block font-medium">Owner</label>
+                        <input type="text" x-model="assetForm.owner" class="w-full border rounded px-2 py-1"/>
+                    </div>
+                    <div>
+                        <label class="block font-medium">Vendor</label>
+                        <input type="text" x-model="assetForm.vendor" class="w-full border rounded px-2 py-1"/>
+                    </div>
+                    <div>
+                        <label class="block font-medium">Category</label>
+                        <input type="text" x-model="assetForm.category" class="w-full border rounded px-2 py-1"/>
+                    </div>
+                    <div>
+                        <label class="block font-medium">Brand</label>
+                        <input type="text" x-model="assetForm.brand" class="w-full border rounded px-2 py-1"/>
+                    </div>
+                    <div>
+                        <label class="block font-medium">Model</label>
+                        <input type="text" x-model="assetForm.model" class="w-full border rounded px-2 py-1"/>
+                    </div>
+                    <div>
+                        <label class="block font-medium">Item Name</label>
+                        <input type="text" x-model="assetForm.item_name" class="w-full border rounded px-2 py-1"/>
+                    </div>
+                    <div>
+                        <label class="block font-medium">Item SN</label>
+                        <input type="text" x-model="assetForm.item_sn" class="w-full border rounded px-2 py-1"/>
+                    </div>
+                    <div>
+                        <label class="block font-medium">Unit Price</label>
+                        <input type="number" x-model="assetForm.unit_price" class="w-full border rounded px-2 py-1"/>
+                    </div>
+                    <div>
+                        <label class="block font-medium">Barang Datang</label>
+                        <input type="date" x-model="assetForm.barang_datang" class="w-full border rounded px-2 py-1"/>
+                    </div>
+                    <div>
+                        <label class="block font-medium">Qty</label>
+                        <input type="number" x-model="assetForm.qty" class="w-full border rounded px-2 py-1"/>
+                    </div>
+                    <div>
+                        <label class="block font-medium">Satuan</label>
+                        <input type="text" x-model="assetForm.satuan" class="w-full border rounded px-2 py-1"/>
+                    </div>
+                    <div>
+                        <label class="block font-medium">Default Location</label>
+                        <input type="text" x-model="assetForm.default_location" class="w-full border rounded px-2 py-1"/>
+                    </div>
+                    <div>
+                        <label class="block font-medium">Status</label>
+                        <input type="text" x-model="assetForm.status" class="w-full border rounded px-2 py-1"/>
+                    </div>
+                    <div>
+                        <label class="block font-medium">Purchase Year</label>
+                        <input type="text" x-model="assetForm.purchase_year" class="w-full border rounded px-2 py-1"/>
+                    </div>
+                    <div class="col-span-2">
+                        <label class="block font-medium">Note</label>
+                        <textarea x-model="assetForm.note" class="w-full border rounded px-2 py-1"></textarea>
+                    </div>
+                </div>
+                <div class="flex justify-end space-x-2 mt-4">
+                    <button type="button" @click="isModalOpen = false" class="px-4 py-2 border rounded">Cancel</button>
+                    <button type="submit" class="px-4 py-2 bg-green-600 text-white rounded">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <script src="//unpkg.com/alpinejs" defer></script>
+    <script>
+        const setup = () => {
+            function getSidebarStateFromLocalStorage() {
+                // if it already there, use it
+                if (window.localStorage.getItem('isSidebarOpen')) {
+                    return JSON.parse(window.localStorage.getItem('isSidebarOpen'))
+                }
+
+                // else return the initial state you want
+                return (
+                    false
+                )
+            }
+
+            function setSidebarStateToLocalStorage(value) {
+                window.localStorage.setItem('isSidebarOpen', value)
+            }
+
+            return {
+                loading: true,
+                assets: [],
+                pageSize: 10,
+                currentPage: 1,
+                pagedAssets() {
+                    return this.assets.slice((this.currentPage - 1) * this.pageSize, this.currentPage * this.pageSize)
+                },
+                totalPages() {
+                    return Math.ceil(this.assets.length / this.pageSize)
+                },
+                isSidebarOpen: getSidebarStateFromLocalStorage(),
+                toggleSidbarMenu() {
+                    this.isSidebarOpen = !this.isSidebarOpen
+                    setSidebarStateToLocalStorage(this.isSidebarOpen)
+                },
+                isSettingsPanelOpen: false,
+                isSearchBoxOpen: false,
+                fetchAssets() {
+                    fetch('/assets')
+                        .then(res => res.json())
+                        .then(data => { 
+                            // console.log(data);
+                            this.assets = data;
+                        })
+                        .catch(err => console.error(err))
+                        .finally(() => { this.loading = false })
+                },
+                isModalOpen: false,
+                assetForm: {
+                    pr: '', po: '', nav: '', pic: '', divisi: '', owner: '', vendor: '', category: '', brand: '', model: '', item_name: '', item_sn: '', unit_price: '', barang_datang: '', qty: '', satuan: '', default_location: '', status: '', purchase_year: '', note: ''
+                },
+                submitAsset() {
+                    this.loading = true;
+                    fetch('/assets', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(this.assetForm)
+                    })
+                    .then(res => {
+                        if (res.ok) return res.json();
+                        throw new Error('Failed to create asset');
+                    })
+                    .then(data => {
+                        this.assets.push(data);
+                        this.isModalOpen = false;
+                        Object.keys(this.assetForm).forEach(k => this.assetForm[k] = '');
+                    })
+                    .catch(err => console.error(err))
+                    .finally(() => { this.loading = false; });
+                },
+            }
+        }
+    </script>
 </body>
 
 </html>
-
-<script src="//unpkg.com/alpinejs" defer></script>
-<script>
-    const setup = () => {
-        function getSidebarStateFromLocalStorage() {
-            // if it already there, use it
-            if (window.localStorage.getItem('isSidebarOpen')) {
-                return JSON.parse(window.localStorage.getItem('isSidebarOpen'))
-            }
-
-            // else return the initial state you want
-            return (
-                false
-            )
-        }
-
-        function setSidebarStateToLocalStorage(value) {
-            window.localStorage.setItem('isSidebarOpen', value)
-        }
-
-        return {
-            loading: true,
-            assets: [],
-            pageSize: 10,
-            currentPage: 1,
-            pagedAssets() {
-                return this.assets.slice((this.currentPage - 1) * this.pageSize, this.currentPage * this.pageSize)
-            },
-            totalPages() {
-                return Math.ceil(this.assets.length / this.pageSize)
-            },
-            isSidebarOpen: getSidebarStateFromLocalStorage(),
-            toggleSidbarMenu() {
-                this.isSidebarOpen = !this.isSidebarOpen
-                setSidebarStateToLocalStorage(this.isSidebarOpen)
-            },
-            isSettingsPanelOpen: false,
-            isSearchBoxOpen: false,
-            fetchAssets() {
-                fetch('/assets')
-                    .then(res => res.json())
-                    .then(data => { 
-                        console.log(data);
-                        this.assets = data;
-                    })
-                    .catch(err => console.error(err))
-                    .finally(() => { this.loading = false })
-            },
-        }
-    }
-</script>
