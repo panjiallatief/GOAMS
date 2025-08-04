@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -12,12 +13,13 @@ import (
 
 // AssetHandler handles HTTP requests for assets
 type AssetHandler struct {
-	service service.AssetService
+	service    service.AssetService
+	logService service.LogService
 }
 
 // NewAssetHandler registers asset routes on the router
-func NewAssetHandler(r *gin.Engine, s service.AssetService) {
-	h := &AssetHandler{service: s}
+func NewAssetHandler(r *gin.Engine, s service.AssetService, ls service.LogService) {
+	h := &AssetHandler{service: s, logService: ls}
 	assets := r.Group("/assets")
 	{
 		assets.POST("", h.CreateAsset)
@@ -25,6 +27,7 @@ func NewAssetHandler(r *gin.Engine, s service.AssetService) {
 		assets.GET(":id", h.GetAsset)
 		assets.PUT(":id", h.UpdateAsset)
 		assets.DELETE(":id", h.DeleteAsset)
+		assets.GET(":id/logs", h.GetAssetLogs)
 	}
 }
 
@@ -35,14 +38,19 @@ func (h *AssetHandler) CreateAsset(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+
 	if err := h.service.CreateAsset(&asset); err != nil {
 		if errors.Is(err, service.ErrSNAlreadyExists) {
-			c.JSON(http.StatusConflict, gin.H{"error": err.Error()})
-		} else {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			c.JSON(http.StatusConflict, gin.H{"error": "Serial Number sudah digunakan"})
+			return
 		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+
+	// Log the creation
+	h.logService.CreateLog(uint(asset.IDAsset), "Create", "System", fmt.Sprintf("Created asset: %s", asset.ItemName))
+
 	c.JSON(http.StatusCreated, asset)
 }
 
@@ -83,7 +91,7 @@ func (h *AssetHandler) UpdateAsset(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	asset.IDAsset = uint(id)
+	asset.IDAsset = int64(id)
 	if err := h.service.UpdateAsset(&asset); err != nil {
 		if errors.Is(err, service.ErrSNAlreadyExists) {
 			c.JSON(http.StatusConflict, gin.H{"error": err.Error()})
@@ -92,6 +100,10 @@ func (h *AssetHandler) UpdateAsset(c *gin.Context) {
 		}
 		return
 	}
+
+	// Create log entry for asset update
+	h.logService.CreateLog(uint(id), "Updated", "System", "Asset information updated")
+
 	c.JSON(http.StatusOK, asset)
 }
 
@@ -102,9 +114,31 @@ func (h *AssetHandler) DeleteAsset(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid asset ID"})
 		return
 	}
+
+	// Create log entry before deletion
+	h.logService.CreateLog(uint(id), "Deleted", "System", "Asset removed from system")
+
 	if err := h.service.DeleteAsset(uint(id)); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 	c.Status(http.StatusNoContent)
+}
+
+// GetAssetLogs returns activity logs for a specific asset
+func (h *AssetHandler) GetAssetLogs(c *gin.Context) {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid asset ID"})
+		return
+	}
+
+	// Get real logs from database
+	logs, err := h.logService.GetAssetLogs(uint(id))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch logs"})
+		return
+	}
+
+	c.JSON(http.StatusOK, logs)
 }

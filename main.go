@@ -28,7 +28,7 @@ func main() {
 	}
 
 	// Migrate database
-	db.AutoMigrate(&models.Asset{})
+	db.AutoMigrate(&models.Asset{}, &models.Log{})
 
 	router := gin.Default()
 
@@ -43,10 +43,19 @@ func main() {
 		c.JSON(http.StatusOK, gin.H{"message": "pong"})
 	})
 
-	// Asset endpoints
+	// Initialize repositories
 	assetRepo := repository.NewAssetRepository(db)
+	logRepo := repository.NewLogRepository(db)
+	dropdownRepo := repository.NewDropdownRepository(db)
+
+	// Initialize services
 	assetService := service.NewAssetService(assetRepo)
-	handlers.NewAssetHandler(router, assetService)
+	logService := service.NewLogService(logRepo)
+	dropdownService := service.NewDropdownService(dropdownRepo)
+
+	// Initialize handlers
+	handlers.NewAssetHandler(router, assetService, logService)
+	handlers.NewDropdownHandler(router, dropdownService)
 
 	// TODO: add other handlers
 

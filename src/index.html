@@ -5,7 +5,29 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="./src/output.css" rel="stylesheet">
-    <style>[x-cloak] { display: none !important; }</style>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <!-- Add Select2 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <!-- Add jQuery (required for Select2) -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- Add Select2 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <style>
+        [x-cloak] { display: none !important; }
+        /* Select2 custom styles to match Tailwind */
+        .select2-container--default .select2-selection--single {
+            height: 42px;
+            padding: 6px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 0.375rem;
+        }
+        .select2-container--default .select2-selection--single .select2-selection__rendered {
+            line-height: 28px;
+        }
+        .select2-container--default .select2-selection--single .select2-selection__arrow {
+            height: 40px;
+        }
+    </style>
 </head>
 
 <body x-data="setup()" x-init="fetchAssets()">
@@ -199,7 +221,7 @@
                                         <svg class="w-6 h-6 text-gray-500" xmlns="http://www.w3.org/2000/svg"
                                             fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                                                d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
                                         </svg>
                                     </button>
 
@@ -391,10 +413,13 @@
                                         </thead>
                                         <tbody class="bg-white divide-y divide-gray-200">
                                             <template x-for="asset in pagedAssets()" :key="asset.id_asset">
-                                                <tr class="transition-all hover:bg-gray-100 hover:shadow-lg">
-                                                    <td class="px-6 py-4 whitespace-nowrap" >edit</td>
+                                                <tr class="transition-all hover:bg-gray-100 hover:shadow-lg cursor-pointer" 
+                                                    @click="showAssetDetails(asset)">
+                                                    <td class="px-6 py-4 whitespace-nowrap">
+                                                        <button @click.stop="editAsset(asset)" class="text-blue-600 hover:text-blue-900">Edit</button>
+                                                    </td>
                                                     <td class="px-6 py-4 whitespace-nowrap" x-text="asset.no_barcode"></td>
-                                                    <td class="px-6 py-4 whitespace-nowrap" x-text="asset.item_sn"></td>
+                                                    <td class="px-6 py-4 whitespace-nowrap" x-text="asset.item_serial_number"></td>
                                                     <td class="px-6 py-4 whitespace-nowrap" x-text="asset.item_name"></td>
                                                 </tr>
                                             </template>
@@ -416,99 +441,330 @@
 
         </div>
     </div>
-
+    
+    <div x-show="isDetailsModalOpen" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-[90%]">
+        <div @click.away="isDetailsModalOpen = false" class="bg-white rounded-lg shadow-lg w-full max-w-4xl max-h-[90vh] overflow-y-auto p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-semibold">Asset Details</h2>
+                <button @click="isDetailsModalOpen = false" class="text-gray-500 hover:text-gray-700">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            
+            <!-- Asset Details Grid -->
+            <div class="grid grid-cols-2 gap-4 mb-6" x-show="selectedAsset">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Barcode</label>
+                    <p class="mt-1 text-sm text-gray-900" x-text="selectedAsset?.no_barcode"></p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Serial Number</label>
+                    <p class="mt-1 text-sm text-gray-900" x-text="selectedAsset?.item_serial_number"></p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Item Name</label>
+                    <p class="mt-1 text-sm text-gray-900" x-text="selectedAsset?.item_name"></p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Brand</label>
+                    <p class="mt-1 text-sm text-gray-900" x-text="selectedAsset?.nama_brand"></p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Model</label>
+                    <p class="mt-1 text-sm text-gray-900" x-text="selectedAsset?.nama_item_model"></p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Category</label>
+                    <p class="mt-1 text-sm text-gray-900" x-text="selectedAsset?.category"></p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Owner</label>
+                    <p class="mt-1 text-sm text-gray-900" x-text="selectedAsset?.owner"></p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">PIC</label>
+                    <p class="mt-1 text-sm text-gray-900" x-text="selectedAsset?.pic_id"></p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Division</label>
+                    <p class="mt-1 text-sm text-gray-900" x-text="selectedAsset?.divisi"></p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Vendor</label>
+                    <p class="mt-1 text-sm text-gray-900" x-text="selectedAsset?.vendor"></p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Unit Price</label>
+                    <p class="mt-1 text-sm text-gray-900" x-text="selectedAsset?.unit_price ? 'Rp ' + selectedAsset.unit_price.toLocaleString('id-ID') : '-'"></p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Purchase Date</label>
+                    <p class="mt-1 text-sm text-gray-900" x-text="selectedAsset?.barang_datang"></p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Current Location</label>
+                    <p class="mt-1 text-sm text-gray-900" x-text="selectedAsset?.current_location || selectedAsset?.default_location"></p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Status</label>
+                    <p class="mt-1 text-sm text-gray-900" x-text="selectedAsset?.status"></p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">PO Number</label>
+                    <p class="mt-1 text-sm text-gray-900" x-text="selectedAsset?.po"></p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">PR Number</label>
+                    <p class="mt-1 text-sm text-gray-900" x-text="selectedAsset?.pr"></p>
+                </div>
+                <div class="col-span-2">
+                    <label class="block text-sm font-medium text-gray-700">Note</label>
+                    <p class="mt-1 text-sm text-gray-900" x-text="selectedAsset?.note || '-'"></p>
+                </div>
+            </div>
+            
+            <!-- Asset Logs Section -->
+            <div class="border-t pt-4">
+                <h3 class="text-lg font-semibold mb-3">Asset Activity Log</h3>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Action</th>
+                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">User</th>
+                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Details</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            <template x-for="log in assetLogs" :key="log.id">
+                                <tr>
+                                    <td class="px-4 py-2 text-sm text-gray-900" x-text="formatDate(log.created_at)"></td>
+                                    <td class="px-4 py-2 text-sm text-gray-900" x-text="log.action"></td>
+                                    <td class="px-4 py-2 text-sm text-gray-900" x-text="log.user"></td>
+                                    <td class="px-4 py-2 text-sm text-gray-900" x-text="log.details"></td>
+                                </tr>
+                            </template>
+                            <tr x-show="!assetLogs.length">
+                                <td colspan="4" class="px-4 py-2 text-sm text-gray-500 text-center">No logs available</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <div class="flex justify-end mt-4">
+                <button @click="isDetailsModalOpen = false" class="px-4 py-2 border rounded">Close</button>
+            </div>
+        </div>
+    </div>
+    
     <!-- Asset Input Modal -->
     <div x-show="isModalOpen" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-[90%]">
-        <div @click.away="isModalOpen = false" class="bg-white rounded-lg shadow-lg w-full max-w-2xl p-6">
-            <h2 class="text-xl font-semibold mb-4">Add New Asset</h2>
-            <form @submit.prevent="submitAsset()" class="space-y-4">
-                <div class="grid grid-cols-2 gap-4">
+        <div @click.away="isModalOpen = false" class="bg-white rounded-lg shadow-lg w-[90vw] h-[80vh] overflow-hidden flex flex-col">
+            <div class="px-6 py-4 border-b">
+                <h2 class="text-xl font-semibold">Input Data Asset</h2>
+            </div>
+            <div class="flex-1 overflow-y-auto px-6 py-4">
+                <form @submit.prevent="submitAsset()" class="space-y-4">
+                    <!-- Row 1: PR, PO, Navision -->
+                    <div class="grid grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">No. Purchase Request</label>
+                            <input type="text" x-model="assetForm.pr" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-blue-500"/>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">No. Purchase Order</label>
+                            <input type="text" x-model="assetForm.po" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-blue-500"/>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">No. Navision</label>
+                            <input type="text" x-model="assetForm.no_navision" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-blue-500"/>
+                        </div>
+                    </div>
+
+                    <!-- Row 2: PIC, Divisi -->
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">PIC</label>
+                            <div class="flex gap-2">
+                                <select x-ref="picSelect" x-model="assetForm.pic_id" class="flex-1 select2-dropdown">
+                                    <option value="" selected disabled>----</option>
+                                    <template x-for="pic in dropdownData.pics" :key="pic.id">
+                                        <option :value="pic.nama_pic" x-text="pic.nama_pic"></option>
+                                    </template>
+                                </select>
+                                <button type="button" @click="openAddModal('pic')" class="px-3 py-2 bg-green-500 text-white rounded hover:bg-green-600">+</button>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Divisi</label>
+                            <div class="flex gap-2">
+                                <select x-ref="divisiSelect" x-model="assetForm.divisi" @change="updateDivisiCode($event)" class="flex-1 select2-dropdown">
+                                    <option value="" selected disabled>--Pilih Divisi--</option>
+                                    <template x-for="division in dropdownData.divisions" :key="division.id">
+                                        <option :value="division.nama_divisi" 
+                                                :data-barcode="division.barcode_name"
+                                                :data-code="division.kode_divisi" 
+                                                x-text="division.nama_divisi"></option>
+                                    </template>
+                                </select>
+                                <button type="button" @click="openAddModal('divisi')" class="px-3 py-2 bg-green-500 text-white rounded hover:bg-green-600">+</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Row 3: Owner, Vendor -->
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Owner</label>
+                            <select x-ref="ownerSelect" x-model="assetForm.owner" @change="updateOwnerCode($event)" class="w-full select2-dropdown">
+                                <option value="" selected disabled>--Pilih Owner--</option>
+                                <template x-for="owner in dropdownData.owners" :key="owner.id">
+                                    <option :value="owner.nama_perusahaan" 
+                                            :data-barcode-id="owner.barcode_name" 
+                                            :id="owner.barcode_name"
+                                            x-text="owner.nama_perusahaan"></option>
+                                </template>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Vendor</label>
+                            <div class="flex gap-2">
+                                <select x-ref="vendorSelect" x-model="assetForm.vendor" class="flex-1 select2-dropdown">
+                                    <option value="" selected disabled>--Pilih Vendor--</option>
+                                    <template x-for="vendor in dropdownData.vendors" :key="vendor.id">
+                                        <option :value="vendor.nama_vendor" x-text="vendor.nama_vendor"></option>
+                                    </template>
+                                </select>
+                                <button type="button" @click="openAddModal('vendor')" class="px-3 py-2 bg-green-500 text-white rounded hover:bg-green-600">+</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Row 4: Category, Brand, Model -->
+                    <div class="grid grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                            <div class="flex gap-2">
+                                <select x-ref="categorySelect" x-model="assetForm.category" class="flex-1 select2-dropdown">
+                                    <option value="" selected disabled>--Pilih Katagori--</option>
+                                    <template x-for="category in dropdownData.categories" :key="category.id">
+                                        <option :value="category.nama_category" x-text="category.nama_category"></option>
+                                    </template>
+                                </select>
+                                <button type="button" @click="openAddModal('category')" class="px-3 py-2 bg-green-500 text-white rounded hover:bg-green-600">+</button>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Item Brand</label>
+                            <div class="flex gap-2">
+                                <select x-ref="brandSelect" x-model="assetForm.nama_brand" class="flex-1 select2-dropdown">
+                                    <option value="" selected disabled>--Pilih Brand--</option>
+                                    <template x-for="brand in dropdownData.brands" :key="brand.id">
+                                        <option :value="brand.nama_brand" x-text="brand.nama_brand"></option>
+                                    </template>
+                                </select>
+                                <button type="button" @click="openAddModal('brand')" class="px-3 py-2 bg-green-500 text-white rounded hover:bg-green-600">+</button>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Item Model</label>
+                            <div class="flex gap-2">
+                                <select x-ref="modelSelect" x-model="assetForm.nama_item_model" class="flex-1 select2-dropdown">
+                                    <option value="" selected disabled>--Pilih Model--</option>
+                                    <template x-for="model in dropdownData.models" :key="model.id">
+                                        <option :value="model.nama_item_model" x-text="model.nama_item_model"></option>
+                                    </template>
+                                </select>
+                                <button type="button" @click="openAddModal('model')" class="px-3 py-2 bg-green-500 text-white rounded hover:bg-green-600">+</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Item Name -->
                     <div>
-                        <label class="block font-medium">Purchase Request</label>
-                        <input type="text" x-model="assetForm.pr" class="w-full border rounded px-2 py-1"/>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Item Name</label>
+                        <input type="text" x-model="assetForm.item_name" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-blue-500"/>
                     </div>
+
+                    <!-- Item SN -->
                     <div>
-                        <label class="block font-medium">Purchase Order</label>
-                        <input type="text" x-model="assetForm.po" class="w-full border rounded px-2 py-1"/>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Item SN</label>
+                        <input type="text" x-model="assetForm.item_serial_number" placeholder="Leave empty or enter 'No SN' if no serial number" 
+                               class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-blue-500"/>
+                        <small class="text-gray-500 text-xs">Jika tidak ada SN harap kosongkan atau isi dengan "No SN"</small>
                     </div>
+
+                    <!-- Item Price -->
                     <div>
-                        <label class="block font-medium">No. Navision</label>
-                        <input type="text" x-model="assetForm.nav" class="w-full border rounded px-2 py-1"/>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Item Price</label>
+                        <input type="text" x-model="assetForm.unit_price" @input="formatCurrency($event)" 
+                               placeholder="IDR 0" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-blue-500"/>
                     </div>
+
+                    <!-- Barang Datang -->
                     <div>
-                        <label class="block font-medium">PIC</label>
-                        <input type="text" x-model="assetForm.pic" class="w-full border rounded px-2 py-1"/>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Barang Datang</label>
+                        <input type="date" x-model="assetForm.barang_datang" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-blue-500"/>
                     </div>
+
+                    <!-- Qty and Satuan -->
                     <div>
-                        <label class="block font-medium">Divisi</label>
-                        <input type="text" x-model="assetForm.divisi" class="w-full border rounded px-2 py-1"/>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Qty</label>
+                        <div class="grid grid-cols-2 gap-4">
+                            <input type="number" x-model="assetForm.qty" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-blue-500"/>
+                            <select x-model="assetForm.satuan" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-blue-500">
+                                <option value="" disabled>--Pilih Satuan--</option>
+                                <option value="unit">Unit</option>
+                                <option value="set">Set</option>
+                                <option value="pcs">Pcs</option>
+                                <option value="btg">Btg</option>
+                                <option value="screen">Screen</option>
+                                <option value="roll">Roll</option>
+                                <option value="mtr">Mtr</option>
+                            </select>
+                        </div>
                     </div>
+
+                    <!-- Default Location and Status -->
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Default Location</label>
+                            <input type="text" x-model="assetForm.default_location" value="CamStore" 
+                                   class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-blue-500"/>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                            <select x-model="assetForm.status" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-blue-500">
+                                <option value="" disabled>--Pilih Status--</option>
+                                <option value="Lengkap">Lengkap</option>
+                                <option value="Tidak Lengkap">Tidak Lengkap</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Purchase Year -->
                     <div>
-                        <label class="block font-medium">Owner</label>
-                        <input type="text" x-model="assetForm.owner" class="w-full border rounded px-2 py-1"/>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Purchase Year</label>
+                        <input type="text" x-model="assetForm.purchase_year" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-blue-500"/>
                     </div>
+
+                    <!-- Note -->
                     <div>
-                        <label class="block font-medium">Vendor</label>
-                        <input type="text" x-model="assetForm.vendor" class="w-full border rounded px-2 py-1"/>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Note</label>
+                        <textarea x-model="assetForm.note" rows="3" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-blue-500"></textarea>
                     </div>
-                    <div>
-                        <label class="block font-medium">Category</label>
-                        <input type="text" x-model="assetForm.category" class="w-full border rounded px-2 py-1"/>
-                    </div>
-                    <div>
-                        <label class="block font-medium">Brand</label>
-                        <input type="text" x-model="assetForm.brand" class="w-full border rounded px-2 py-1"/>
-                    </div>
-                    <div>
-                        <label class="block font-medium">Model</label>
-                        <input type="text" x-model="assetForm.model" class="w-full border rounded px-2 py-1"/>
-                    </div>
-                    <div>
-                        <label class="block font-medium">Item Name</label>
-                        <input type="text" x-model="assetForm.item_name" class="w-full border rounded px-2 py-1"/>
-                    </div>
-                    <div>
-                        <label class="block font-medium">Item SN</label>
-                        <input type="text" x-model="assetForm.item_sn" class="w-full border rounded px-2 py-1"/>
-                    </div>
-                    <div>
-                        <label class="block font-medium">Unit Price</label>
-                        <input type="number" x-model="assetForm.unit_price" class="w-full border rounded px-2 py-1"/>
-                    </div>
-                    <div>
-                        <label class="block font-medium">Barang Datang</label>
-                        <input type="date" x-model="assetForm.barang_datang" class="w-full border rounded px-2 py-1"/>
-                    </div>
-                    <div>
-                        <label class="block font-medium">Qty</label>
-                        <input type="number" x-model="assetForm.qty" class="w-full border rounded px-2 py-1"/>
-                    </div>
-                    <div>
-                        <label class="block font-medium">Satuan</label>
-                        <input type="text" x-model="assetForm.satuan" class="w-full border rounded px-2 py-1"/>
-                    </div>
-                    <div>
-                        <label class="block font-medium">Default Location</label>
-                        <input type="text" x-model="assetForm.default_location" class="w-full border rounded px-2 py-1"/>
-                    </div>
-                    <div>
-                        <label class="block font-medium">Status</label>
-                        <input type="text" x-model="assetForm.status" class="w-full border rounded px-2 py-1"/>
-                    </div>
-                    <div>
-                        <label class="block font-medium">Purchase Year</label>
-                        <input type="text" x-model="assetForm.purchase_year" class="w-full border rounded px-2 py-1"/>
-                    </div>
-                    <div class="col-span-2">
-                        <label class="block font-medium">Note</label>
-                        <textarea x-model="assetForm.note" class="w-full border rounded px-2 py-1"></textarea>
-                    </div>
+                </form>
+            </div>
+            <div class="px-6 py-4 border-t bg-gray-50">
+                <div class="flex justify-end space-x-2">
+                    <button type="button" @click="isModalOpen = false" class="px-6 py-2 border border-gray-300 rounded hover:bg-gray-50">Cancel</button>
+                    <button type="button" @click="submitAsset()" class="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Simpan Data</button>
                 </div>
-                <div class="flex justify-end space-x-2 mt-4">
-                    <button type="button" @click="isModalOpen = false" class="px-4 py-2 border rounded">Cancel</button>
-                    <button type="submit" class="px-4 py-2 bg-green-600 text-white rounded">Save</button>
-                </div>
-            </form>
+            </div>
         </div>
     </div>
     <script src="//unpkg.com/alpinejs" defer></script>
@@ -533,53 +789,294 @@
             return {
                 loading: true,
                 assets: [],
+                assetLogs: [],
+                selectedAsset: null,
                 pageSize: 10,
                 currentPage: 1,
+                isDetailsModalOpen: false,
+                isModalOpen: false,
+                isSidebarOpen: getSidebarStateFromLocalStorage(),
+                isSettingsPanelOpen: false,
+                isSearchBoxOpen: false,
+                dropdownData: {
+                    pics: [],
+                    divisions: [],
+                    owners: [],
+                    vendors: [],
+                    categories: [],
+                    brands: [],
+                    models: []
+                },
+                assetForm: {
+                    pr: '', 
+                    po: '', 
+                    no_navision: '', 
+                    pic_id: '', 
+                    divisi: '', 
+                    divisi_code: '', // Store division code for barcode
+                    divisi_barcode: '', // Store division barcode
+                    owner: '', 
+                    owner_barcode_id: '', // Store owner barcode ID
+                    vendor: '', 
+                    category: '', 
+                    nama_brand: '', 
+                    nama_item_model: '', 
+                    item_name: '', 
+                    item_serial_number: '', 
+                    unit_price: '', 
+                    barang_datang: '', 
+                    qty: 1, 
+                    satuan: '', 
+                    default_location: 'CamStore', 
+                    status: '', 
+                    purchase_year: '', 
+                    note: '',
+                    tahun_barang_datang: ''
+                },
+                init() {
+                    // Fetch dropdown data when component initializes
+                    this.fetchDropdownData();
+                    
+                    // Initialize Select2 after Alpine renders the selects
+                    this.$nextTick(() => {
+                        this.initializeSelect2();
+                    });
+                    
+                    // Watch for modal open to reinitialize Select2
+                    this.$watch('isModalOpen', (value) => {
+                        if (value) {
+                            this.$nextTick(() => {
+                                this.initializeSelect2();
+                            });
+                        }
+                    });
+                },
+                fetchDropdownData() {
+                    // Fetch all dropdown data
+                    Promise.all([
+                        fetch('/dropdowns/pics').then(res => res.json()),
+                        fetch('/dropdowns/divisions').then(res => res.json()),
+                        fetch('/dropdowns/owners').then(res => res.json()),
+                        fetch('/dropdowns/vendors').then(res => res.json()),
+                        fetch('/dropdowns/categories').then(res => res.json()),
+                        fetch('/dropdowns/brands').then(res => res.json()),
+                        fetch('/dropdowns/models').then(res => res.json())
+                    ]).then(([pics, divisions, owners, vendors, categories, brands, models]) => {
+                        this.dropdownData = {
+                            pics: pics || [],
+                            divisions: divisions || [],
+                            owners: owners || [],
+                            vendors: vendors || [],
+                            categories: categories || [],
+                            brands: brands || [],
+                            models: models || []
+                        };
+                        
+                        // Reinitialize Select2 after data is loaded
+                        this.$nextTick(() => {
+                            this.initializeSelect2();
+                        });
+                    }).catch(err => {
+                        console.error('Error fetching dropdown data:', err);
+                    });
+                },
+                initializeSelect2() {
+                    // Initialize Select2 for all dropdowns
+                    const self = this;
+                    
+                    // PIC Select2
+                    $(this.$refs.picSelect).select2({
+                        placeholder: "Pilih PIC",
+                        width: '100%'
+                    }).on('select2:select', function(e) {
+                        self.assetForm.pic_id = e.params.data.id;
+                    });
+                    
+                    // Division Select2
+                    $(this.$refs.divisiSelect).select2({
+                        placeholder: "Pilih Divisi",
+                        width: '100%'
+                    }).on('select2:select', function(e) {
+                        self.assetForm.divisi = e.params.data.id;
+                        const code = $(e.params.data.element).data('code');
+                        self.assetForm.divisi_code = code;
+                    });
+                    
+                    // Owner Select2
+                    $(this.$refs.ownerSelect).select2({
+                        placeholder: "Pilih Owner",
+                        width: '100%'
+                    }).on('select2:select', function(e) {
+                        self.assetForm.owner = e.params.data.id;
+                        const barcodeId = $(e.params.data.element).data('barcode-id');
+                        self.assetForm.owner_barcode_id = barcodeId;
+                    });
+                    
+                    // Vendor Select2
+                    $(this.$refs.vendorSelect).select2({
+                        placeholder: "Pilih Vendor",
+                        width: '100%'
+                    }).on('select2:select', function(e) {
+                        self.assetForm.vendor = e.params.data.id;
+                    });
+                    
+                    // Category Select2
+                    $(this.$refs.categorySelect).select2({
+                        placeholder: "Pilih Category",
+                        width: '100%'
+                    }).on('select2:select', function(e) {
+                        self.assetForm.category = e.params.data.id;
+                    });
+                    
+                    // Brand Select2
+                    $(this.$refs.brandSelect).select2({
+                        placeholder: "Pilih Brand",
+                        width: '100%'
+                    }).on('select2:select', function(e) {
+                        self.assetForm.nama_brand = e.params.data.id;
+                    });
+                    
+                    // Model Select2
+                    $(this.$refs.modelSelect).select2({
+                        placeholder: "Pilih Model",
+                        width: '100%'
+                    }).on('select2:select', function(e) {
+                        self.assetForm.nama_item_model = e.params.data.id;
+                    });
+                },
+                updateDivisiCode(event) {
+                    // Update division code when selection changes
+                    const selectedOption = event.target.selectedOptions[0];
+                    if (selectedOption) {
+                        this.assetForm.divisi_code = selectedOption.getAttribute('data-code');
+                        this.assetForm.divisi_barcode = selectedOption.getAttribute('data-barcode');
+                    }
+                },
+                updateOwnerCode(event) {
+                    // Update owner barcode ID when selection changes
+                    const selectedOption = event.target.selectedOptions[0];
+                    if (selectedOption) {
+                        this.assetForm.owner_barcode_id = selectedOption.getAttribute('data-barcode-id');
+                    }
+                },
+                openAddModal(type) {
+                    // TODO: Implement modal for adding new items
+                    console.log('Open add modal for:', type);
+                },
+                fetchAssets() {
+                    fetch('/assets')
+                        .then(res => res.json())
+                        .then(data => { 
+                            this.assets = data || [];
+                        })
+                        .catch(err => console.error(err))
+                        .finally(() => { this.loading = false })
+                },
                 pagedAssets() {
                     return this.assets.slice((this.currentPage - 1) * this.pageSize, this.currentPage * this.pageSize)
                 },
                 totalPages() {
                     return Math.ceil(this.assets.length / this.pageSize)
                 },
-                isSidebarOpen: getSidebarStateFromLocalStorage(),
                 toggleSidbarMenu() {
                     this.isSidebarOpen = !this.isSidebarOpen
                     setSidebarStateToLocalStorage(this.isSidebarOpen)
                 },
-                isSettingsPanelOpen: false,
-                isSearchBoxOpen: false,
-                fetchAssets() {
-                    fetch('/assets')
-                        .then(res => res.json())
-                        .then(data => { 
-                            // console.log(data);
-                            this.assets = data;
-                        })
-                        .catch(err => console.error(err))
-                        .finally(() => { this.loading = false })
+                showAssetDetails(asset) {
+                    this.selectedAsset = asset;
+                    this.isDetailsModalOpen = true;
+                    this.fetchAssetLogs(asset.id_asset);
                 },
-                isModalOpen: false,
-                assetForm: {
-                    pr: '', po: '', nav: '', pic: '', divisi: '', owner: '', vendor: '', category: '', brand: '', model: '', item_name: '', item_sn: '', unit_price: '', barang_datang: '', qty: '', satuan: '', default_location: '', status: '', purchase_year: '', note: ''
+                fetchAssetLogs(assetId) {
+                    fetch(`/assets/${assetId}/logs`)
+                        .then(res => res.json())
+                        .then(data => { this.assetLogs = data; console.log(data)})
+                        .catch(err => {
+                            console.error(err);
+                            this.assetLogs = [];
+                        });
                 },
                 submitAsset() {
                     this.loading = true;
+                    
+                    // Prepare form data - only send the fields that match the Go model
+                    const formData = {
+                        pr: this.assetForm.pr,
+                        po: this.assetForm.po,
+                        no_navision: this.assetForm.no_navision,
+                        pic_id: this.assetForm.pic_id,
+                        divisi: this.assetForm.divisi,
+                        owner: this.assetForm.owner,
+                        vendor: this.assetForm.vendor,
+                        category: this.assetForm.category,
+                        nama_brand: this.assetForm.nama_brand,
+                        nama_item_model: this.assetForm.nama_item_model,
+                        item_name: this.assetForm.item_name,
+                        item_serial_number: this.assetForm.item_serial_number,
+                        unit_price: parseInt(this.assetForm.unit_price || '0'),
+                        barang_datang: this.assetForm.barang_datang,
+                        qty: parseInt(this.assetForm.qty || '1'),
+                        satuan: this.assetForm.satuan,
+                        default_location: this.assetForm.default_location,
+                        current_location: this.assetForm.default_location,
+                        status: this.assetForm.status,
+                        purchase_year: this.assetForm.purchase_year,
+                        note: this.assetForm.note,
+                        tahun_barang_datang: this.assetForm.tahun_barang_datang
+                    };
+                    
                     fetch('/assets', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(this.assetForm)
+                        body: JSON.stringify(formData)
                     })
                     .then(res => {
-                        if (res.ok) return res.json();
-                        throw new Error('Failed to create asset');
+                        if (!res.ok) {
+                            return res.json().then(err => Promise.reject(err));
+                        }
+                        return res.json();
                     })
                     .then(data => {
-                        this.assets.push(data);
-                        this.isModalOpen = false;
-                        Object.keys(this.assetForm).forEach(k => this.assetForm[k] = '');
+                        // Show success message
+                        alert('Sukses Insert Asset');
+                        
+                        // Ask if user wants to add more assets with same PO/PR
+                        if (confirm('Ingin Menambah Data Di PO/PR yang sama?')) {
+                            // Clear only specific fields, keep PO/PR and other common fields
+                            this.assetForm.item_name = '';
+                            this.assetForm.item_serial_number = '';
+                            this.assetForm.unit_price = '';
+                            this.assetForm.qty = 1;
+                            this.assetForm.note = '';
+                        } else {
+                            // Close modal and reset entire form
+                            this.isModalOpen = false;
+                            this.resetForm();
+                        }
+                        
+                        // Refresh the asset list
+                        this.fetchAssets();
                     })
-                    .catch(err => console.error(err))
+                    .catch(err => {
+                        console.error(err);
+                        alert(err.error || 'Failed to create asset');
+                    })
                     .finally(() => { this.loading = false; });
+                },
+                formatDate(dateString) {
+                    if (!dateString) return '-';
+                    const date = new Date(dateString);
+                    return date.toLocaleDateString('id-ID', { 
+                        year: 'numeric', 
+                        month: 'short', 
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    });
+                },
+                editAsset(asset) {
+                    // TODO: Implement edit functionality
+                    console.log('Edit asset:', asset);
                 },
             }
         }
